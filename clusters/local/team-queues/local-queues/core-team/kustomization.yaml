@@ -4,4 +4,4 @@ resources:
   - core-team-namespace.yaml
   - core-general-queue.yaml
   - core-gpu-queue.yaml
-  - bastion
+  - kubeconfig-serviceaccount.yaml

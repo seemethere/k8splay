@@ -1,0 +1,3 @@
+# Generated kubeconfigs (contain sensitive tokens)
+*-kubeconfig.yaml
+*.kubeconfig
