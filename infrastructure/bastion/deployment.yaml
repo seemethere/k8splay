@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bastion
+  labels:
+    app: bastion
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bastion
+  template:
+    metadata:
+      labels:
+        app: bastion
+    spec:
+      serviceAccountName: bastion-sa
+      containers:
+      - name: bastion
+        image: ubuntu:22.04
+        command: ["/bin/bash"]
+        args: ["-c", "apt-get update && apt-get install -y openssh-server sudo curl && curl -LO https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl && chmod +x kubectl && mv kubectl /usr/local/bin/ && useradd -m -s /bin/bash developer && echo 'developer:developer' | chpasswd && echo 'developer ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers && mkdir -p /home/developer/.ssh && chmod 700 /home/developer/.ssh && chown developer:developer /home/developer/.ssh && service ssh start && tail -f /dev/null"]
+        ports:
+        - containerPort: 22
+          name: ssh
+        env:
+        - name: KUBECONFIG
+          value: "/var/run/secrets/kubernetes.io/serviceaccount/token"
+        volumeMounts:
+        - name: ssh-keys
+          mountPath: /home/developer/.ssh/authorized_keys
+          subPath: authorized_keys
+          readOnly: true
+      volumes:
+      - name: ssh-keys
+        configMap:
+          name: bastion-ssh-keys
+          defaultMode: 0600
