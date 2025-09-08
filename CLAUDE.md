@@ -13,6 +13,10 @@ This is a GitOps-based Kubernetes playground repository using Flux CD for automa
   - `flux-system/` - Flux CD system configuration and sync settings
   - `kueue/` - Kueue job scheduling system overlay for local cluster
   - `nvidia-gpu-operator/` - NVIDIA GPU Operator overlay for local cluster
+  - `team-queues/` - Team-based queue management system with resource flavors and local queues
+    - `resource-flavors/` - CPU and GPU resource flavor definitions
+    - `cluster-queues/` - Core team cluster queue configuration
+    - `local-queues/core-team/` - Local queues for core team namespace
 - `infrastructure/` - Base infrastructure component definitions
   - `kueue/` - Kueue job scheduling system (Helm repository, release, and namespace)
   - `nvidia-gpu-operator/` - NVIDIA GPU Operator (Helm repository, release, and namespace)
@@ -42,6 +46,14 @@ The repository uses Flux CD for GitOps automation:
 - Configured to manage jobs without queue names and wait for pod readiness
 - Supports batch/job framework integration
 - Location: `infrastructure/kueue/`
+
+### Team-Based Queue Management
+- Comprehensive queue system with resource flavors for CPU and GPU workloads
+- **Resource Flavors**: CPU and GPU flavor definitions for node targeting
+- **Cluster Queues**: Core team cluster queue for resource allocation
+- **Local Queues**: Team-specific local queues (core-general-queue, core-gpu-queue)
+- **Namespace Management**: Dedicated core-team namespace for queue isolation
+- Location: `clusters/local/team-queues/`
 
 ## Working with This Repository
 
@@ -84,6 +96,9 @@ Cluster overlays reference base infrastructure components and can add patches or
 - **Cluster-specific config**: Create overlay in `clusters/local/` that references base infrastructure
 - **Update component version**: Modify version in `helm-release.yaml`
 - **Add cluster patches**: Use `patchesStrategicMerge` or `patches` in cluster overlay kustomization
+- **Add new team queue**: Create team directory under `team-queues/local-queues/` with namespace, local queues, and kustomization
+- **Add resource flavors**: Define new resource flavors in `team-queues/resource-flavors/` for specific node types or requirements
+- **Configure cluster queues**: Modify cluster queue definitions in `team-queues/cluster-queues/` for resource allocation policies
 
 ## Development Notes
 - No traditional build/test/lint commands - this is a declarative Kubernetes configuration repository
