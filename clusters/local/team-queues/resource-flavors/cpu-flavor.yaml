@@ -4,5 +4,5 @@ metadata:
   name: cpu-flavor
 spec:
   nodeLabels:
-    # Standard CPU nodes - no specific requirements
-    kubernetes.io/arch: amd64
+    # Standard CPU nodes - matches any available nodes
+    kubernetes.io/os: linux
