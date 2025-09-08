@@ -32,7 +32,7 @@ spec:
       enabled: true
     operator:
       defaultRuntime: containerd
-    # Configure for local development/testing
+    # Default tolerations for GPU nodes
     tolerations:
       - key: nvidia.com/gpu
         operator: Exists
