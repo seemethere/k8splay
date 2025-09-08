@@ -1,0 +1,41 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: nvidia-gpu-operator
+  namespace: nvidia-gpu-operator
+spec:
+  interval: 10m
+  chart:
+    spec:
+      chart: gpu-operator
+      version: ">=1.0.0"
+      sourceRef:
+        kind: HelmRepository
+        name: nvidia-gpu-operator
+        namespace: nvidia-gpu-operator
+  values:
+    # Enable all GPU operator components
+    driver:
+      enabled: true
+    toolkit:
+      enabled: true
+    devicePlugin:
+      enabled: true
+    migManager:
+      enabled: true
+    dcgmExporter:
+      enabled: true
+    gfd:
+      enabled: true
+    nodeStatusExporter:
+      enabled: true
+    operator:
+      defaultRuntime: containerd
+    # Configure for local development/testing
+    tolerations:
+      - key: nvidia.com/gpu
+        operator: Exists
+        effect: NoSchedule
+    nodeSelector:
+      nvidia.com/gpu.present: "true"
