@@ -1,0 +1,53 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kueue
+  namespace: kueue-system
+spec:
+  interval: 10m
+  chart:
+    spec:
+      chart: kueue
+      version: "0.13.3"
+      sourceRef:
+        kind: HelmRepository
+        name: kueue
+        namespace: kueue-system
+  values:
+    # Kueue configuration
+    controllerManager:
+      kubeRbacProxy:
+        args:
+          - --secure-listen-address=0.0.0.0:8443
+          - --upstream=http://127.0.0.1:8080/
+          - --logtostderr=true
+          - --v=0
+      manager:
+        args:
+          - --config=/controller_manager_config.yaml
+          - --zap-log-level=2
+        env:
+          - name: KUEUE_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+    # Enable features as needed
+    # featureGates:
+    #   - FlavorFungibility=true
+    #   - MultiKueue=true
+    #   - PartialAdmission=true
+    #   - ProvisioningACC=true
+
+    # Configuration for Kueue
+    config:
+      # Enable management of jobs without queue name
+      manageJobsWithoutQueueName: true
+      # Enable waiting for pods to be ready
+      waitForPodsReady:
+        enable: true
+        timeout: 10m
+      # Integration frameworks
+      integrations:
+        frameworks:
+          - "batch/job"

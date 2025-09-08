@@ -1,0 +1,11 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    app.kubernetes.io/instance: kueue
+    app.kubernetes.io/part-of: kueue
+    app.kubernetes.io/version: v0.13.3
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+  name: kueue-system
