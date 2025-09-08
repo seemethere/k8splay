@@ -7,3 +7,7 @@ subjects:
 - kind: ServiceAccount
   name: bastion-sa
   namespace: core-team
+roleRef:
+  kind: Role
+  name: job-manager-role
+  apiGroup: rbac.authorization.k8s.io
