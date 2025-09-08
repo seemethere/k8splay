@@ -7,5 +7,11 @@ resources:
 - ../../../../../../infrastructure/bastion
 - ssh-keys-configmap.yaml
 
-patchesStrategicMerge:
-- namespace-patch.yaml
+patches:
+- target:
+    kind: RoleBinding
+    name: bastion-job-manager-binding
+  patch: |-
+    - op: replace
+      path: /subjects/0/namespace
+      value: core-team
