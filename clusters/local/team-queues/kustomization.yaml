@@ -5,3 +5,4 @@ resources:
   - resource-flavors
   - cluster-queues
   - local-queues/core-team
+  - local-queues/distributed-team
