@@ -7,4 +7,4 @@ metadata:
 spec:
   interval: 10m
   url: https://helm.ngc.nvidia.com/nvidia
-  type: oci
+  type: default
