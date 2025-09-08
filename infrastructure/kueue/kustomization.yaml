@@ -4,3 +4,7 @@ resources:
   - namespace.yaml
   - helm-repository.yaml
   - helm-release.yaml
+  - user-namespace.yaml
+  - resource-flavor.yaml
+  - cluster-queue.yaml
+  - local-queue.yaml
