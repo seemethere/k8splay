@@ -19,6 +19,10 @@ rules:
 - apiGroups: ["kueue.x-k8s.io"]
   resources: ["workloads"]
   verbs: ["get", "list", "watch"]
+# Allow viewing local queues to discover available queues
+- apiGroups: ["kueue.x-k8s.io"]
+  resources: ["localqueues"]
+  verbs: ["get", "list", "watch"]
 # Allow viewing events for troubleshooting
 - apiGroups: [""]
   resources: ["events"]
