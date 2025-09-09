@@ -4,9 +4,8 @@ metadata:
   name: kueue-controller-manager-metrics
   namespace: kueue-system
   labels:
-    app.kubernetes.io/component: controller
     app.kubernetes.io/name: kueue
-    app.kubernetes.io/part-of: kueue
+    control-plane: controller-manager
 spec:
   endpoints:
   - path: /metrics
@@ -17,6 +16,5 @@ spec:
       insecureSkipVerify: true
   selector:
     matchLabels:
-      app.kubernetes.io/component: controller
       app.kubernetes.io/name: kueue
-      app.kubernetes.io/part-of: kueue
+      control-plane: controller-manager
