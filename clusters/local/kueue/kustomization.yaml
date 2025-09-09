@@ -2,16 +2,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ../../../infrastructure/kueue
-# Optional: Add cluster-specific patches here
-# patchesStrategicMerge:
-#   - helm-release-patch.yaml
-
-# Optional: Add cluster-specific configurations
-# patches:
-#   - target:
-#       kind: HelmRelease
-#       name: kueue
-#     patch: |-
-#       - op: replace
-#         path: /spec/values/config/manageJobsWithoutQueueName
-#         value: false
+  - cluster-role.yaml
+  - resource-flavors
+  - cluster-queues
+  - local-queues/core-team
+  - local-queues/distributed-team
