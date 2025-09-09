@@ -47,6 +47,9 @@ spec:
       waitForPodsReady:
         enable: true
         timeout: 10m
+      # Enable optional metrics
+      metrics:
+        enableClusterQueueResources: true
       # Integration frameworks
       integrations:
         frameworks:

@@ -1,0 +1,22 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kueue-controller-manager-metrics
+  namespace: kueue-system
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/name: kueue
+    app.kubernetes.io/part-of: kueue
+spec:
+  endpoints:
+  - path: /metrics
+    port: https
+    scheme: https
+    bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+    tlsConfig:
+      insecureSkipVerify: true
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: controller
+      app.kubernetes.io/name: kueue
+      app.kubernetes.io/part-of: kueue
