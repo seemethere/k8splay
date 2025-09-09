@@ -4,3 +4,4 @@ resources:
   - flux-system
   - kueue
   - nvidia-gpu-operator
+  - team-queues-kustomization.yaml
