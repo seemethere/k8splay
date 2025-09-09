@@ -5,7 +5,7 @@ metadata:
   name: team-queues
   namespace: flux-system
 spec:
-  interval: 10m0s
+  interval: 2m0s
   path: ./clusters/local/team-queues
   prune: true
   sourceRef:
