@@ -6,6 +6,7 @@ metadata:
   labels:
     app.kubernetes.io/name: kueue
     control-plane: controller-manager
+    release: prometheus-kube-prometheus-stack
 spec:
   endpoints:
   - path: /metrics
