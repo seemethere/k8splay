@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: dev-workspace
+  namespace: core-team
+  labels:
+    app: dev-workspace
+    team: core
+spec:
+  serviceName: dev-workspace
+  replicas: 0
+  selector:
+    matchLabels:
+      app: dev-workspace
+  template:
+    metadata:
+      labels:
+        app: dev-workspace
+        team: core
+        kueue.x-k8s.io/queue-name: core-general-queue
+    spec:
+      containers:
+      - name: dev-container
+        image: docker:dind
+        securityContext:
+          privileged: true
+        command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Starting Docker-in-Docker development workspace in pod $HOSTNAME"
+          echo "Persistent volume mounted at /home/dev"
+          ls -la /home/dev/
+          # Start Docker daemon in background
+          dockerd-entrypoint.sh &
+          # Keep the container running
+          tail -f /dev/null
+        volumeMounts:
+        - name: dev-storage
+          mountPath: /home/dev
+        - name: docker-graph-storage
+          mountPath: /var/lib/docker
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+          limits:
+            cpu: "1000m"
+            memory: "2Gi"
+  volumeClaimTemplates:
+  - metadata:
+      name: dev-storage
+      labels:
+        app: dev-workspace
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 10Gi
+  - metadata:
+      name: docker-graph-storage
+      labels:
+        app: dev-workspace
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 20Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dev-workspace
+  namespace: core-team
+  labels:
+    app: dev-workspace
+    team: core
+spec:
+  clusterIP: None
+  selector:
+    app: dev-workspace
+  ports:
+  - port: 8080
+    targetPort: 8080
+    name: http
