@@ -54,3 +54,5 @@ spec:
       integrations:
         frameworks:
           - "batch/job"
+          - "pod" # needed by statefulset
+          - "statefulset"
