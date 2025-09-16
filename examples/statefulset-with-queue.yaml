@@ -29,6 +29,7 @@ spec:
         - -c
         - |
           echo "Starting Docker-in-Docker development workspace in pod $HOSTNAME"
+          adduser dev
           echo "Persistent volume mounted at /home/dev"
           ls -la /home/dev/
           # Start Docker daemon in background
@@ -40,6 +41,8 @@ spec:
           mountPath: /home/dev
         - name: docker-graph-storage
           mountPath: /var/lib/docker
+        - name: shared-storage
+          mountPath: /shared
         resources:
           requests:
             cpu: "500m"
@@ -47,6 +50,11 @@ spec:
           limits:
             cpu: "1000m"
             memory: "2Gi"
+      volumes:
+      - name: shared-storage
+        hostPath:
+          path: /tmp/k8s-shared
+          type: DirectoryOrCreate
   volumeClaimTemplates:
   - metadata:
       name: dev-storage
