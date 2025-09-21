@@ -1,0 +1,64 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cluster-autoscaler
+  namespace: cluster-autoscaler
+spec:
+  interval: 10m
+  chart:
+    spec:
+      chart: cluster-autoscaler
+      version: ">=1.0.0"
+      sourceRef:
+        kind: HelmRepository
+        name: autoscaler
+        namespace: cluster-autoscaler
+  # Install to kube-system namespace to use existing service account
+  targetNamespace: kube-system
+  values:
+    # Use existing service account created by eksctl
+    rbac:
+      serviceAccount:
+        create: false
+        name: cluster-autoscaler
+    
+    # Auto-discovery configuration for EKS
+    autoDiscovery:
+      clusterName: "eliuriegas-us-west-2-k8splay-cluster"  # Replace with your actual cluster name
+      enabled: true
+      tags:
+        - k8s.io/cluster-autoscaler/enabled
+        - k8s.io/cluster-autoscaler/eliuriegas-us-west-2-k8splay-cluster
+    
+    # AWS region (will be replaced by install script)
+    awsRegion: us-west-2
+    
+    # Image configuration  
+    image:
+      repository: registry.k8s.io/autoscaling/cluster-autoscaler
+      tag: v1.30.0  # Match your EKS version
+    
+    # Resource configuration
+    resources:
+      limits:
+        cpu: 100m
+        memory: 600Mi
+      requests:
+        cpu: 100m
+        memory: 600Mi
+    
+    # Pod configuration
+    nodeSelector:
+      node-type: cpu  # Schedule on CPU nodes only
+    
+    # Autoscaler configuration
+    extraArgs:
+      v: 4
+      stderrthreshold: info
+      cloud-provider: aws
+      skip-nodes-with-local-storage: false
+      expander: least-waste
+      node-group-auto-discovery: asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/eliuriegas-us-west-2-k8splay-cluster
+      balance-similar-node-groups: false
+      skip-nodes-with-system-pods: false

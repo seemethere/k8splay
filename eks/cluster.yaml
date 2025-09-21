@@ -1,0 +1,143 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: ${USER}-${REGION}-k8splay-cluster
+  region: us-west-2
+  version: "1.30"
+  tags:
+    Environment: k8splay
+    Project: kubernetes-playground
+    ManagedBy: eksctl
+    Owner: ${USER}
+    Region: ${REGION}
+
+# VPC Configuration - Create new VPC with public and private subnets
+vpc:
+  cidr: 10.0.0.0/16
+
+# IAM configuration for cluster service role
+iam:
+  withOIDC: true
+  serviceAccounts:
+    - metadata:
+        name: ebs-csi-controller-sa
+        namespace: kube-system
+      wellKnownPolicies:
+        ebsCSIController: true
+    - metadata:
+        name: cluster-autoscaler
+        namespace: kube-system
+      wellKnownPolicies:
+        autoScaler: true
+
+# Node Groups Configuration
+nodeGroups:
+  # General purpose CPU node group
+  - name: cpu-workers
+    labels:
+      node-type: cpu
+      workload-type: general
+    instanceType: c5.4xlarge
+    desiredCapacity: 2
+    minSize: 1
+    maxSize: 4
+    volumeSize: 100
+    volumeType: gp3
+    amiFamily: Ubuntu2204
+    privateNetworking: true
+    iam:
+      withAddonPolicies:
+        imageBuilder: true
+        autoScaler: true
+        externalDNS: true
+        certManager: true
+        appMesh: true
+        appMeshPreview: true
+        ebs: true
+        fsx: true
+        efs: true
+        xRay: true
+        cloudWatch: true
+    tags:
+      NodeGroup: cpu-workers
+      Environment: k8splay
+      Team: platform
+    
+  # GPU node group for ML/AI workloads
+  - name: gpu-workers
+    labels:
+      node-type: gpu
+      workload-type: ml-ai
+      nvidia.com/gpu: "true"
+    instanceType: g4dn.12xlarge
+    desiredCapacity: 0
+    minSize: 0
+    maxSize: 4
+    volumeSize: 200
+    volumeType: gp3
+    amiFamily: Ubuntu2204
+    privateNetworking: true
+    taints:
+      - key: nvidia.com/gpu
+        value: "true"
+        effect: NoSchedule
+    iam:
+      withAddonPolicies:
+        imageBuilder: true
+        autoScaler: true
+        ebs: true
+        efs: true
+        cloudWatch: true
+    tags:
+      NodeGroup: gpu-workers
+      Environment: k8splay
+      Team: platform
+      GPUEnabled: "true"
+
+# Managed Add-ons
+addons:
+  - name: vpc-cni
+    version: latest
+    configurationValues: |-
+      env:
+        ENABLE_POD_ENI: "true"
+        ENABLE_PREFIX_DELEGATION: "true"
+        POD_SECURITY_GROUP_ENFORCING_MODE: "standard"
+  - name: coredns
+    version: latest
+  - name: kube-proxy
+    version: latest
+  - name: aws-ebs-csi-driver
+    version: latest
+    wellKnownPolicies:
+      ebsCSIController: true
+  - name: aws-efs-csi-driver
+    version: latest
+  - name: eks-pod-identity-agent
+    version: latest
+
+# Cluster configuration
+kubernetesNetworkConfig:
+  ipFamily: IPv4
+  serviceIPv4CIDR: 172.20.0.0/16
+
+# Logging configuration
+cloudWatch:
+  clusterLogging:
+    enableTypes: ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+    logRetentionInDays: 30
+
+# Security and access configuration
+accessConfig:
+  bootstrapClusterCreatorAdminPermissions: true
+  authenticationMode: API_AND_CONFIG_MAP
+
+# Additional cluster settings
+privateCluster:
+  enabled: false
+  additionalEndpointServices:
+    - "com.amazonaws.us-west-2.ec2"
+    - "com.amazonaws.us-west-2.ecr.dkr"
+    - "com.amazonaws.us-west-2.ecr.api"
+    - "com.amazonaws.us-west-2.s3"

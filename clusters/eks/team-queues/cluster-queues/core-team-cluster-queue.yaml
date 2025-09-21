@@ -1,0 +1,25 @@
+apiVersion: kueue.x-k8s.io/v1beta1
+kind: ClusterQueue
+metadata:
+  name: core-team-cluster-queue
+spec:
+  namespaceSelector: {}  # Allow all namespaces by default
+  resourceGroups:
+  - coveredResources: ["cpu", "memory"]
+    flavors:
+    - name: cpu-flavor
+      resources:
+      - name: "cpu"
+        nominalQuota: 100  # 100 CPU cores
+      - name: "memory"
+        nominalQuota: 400Gi  # 400GB memory
+  - coveredResources: ["nvidia.com/gpu"]
+    flavors:
+    - name: gpu-flavor
+      resources:
+      - name: "nvidia.com/gpu"
+        nominalQuota: 8  # 8 GPUs total
+  queueingStrategy: BestEffortFIFO  # First-in-first-out queuing
+  preemption:
+    reclaimWithinCohort: Any
+    withinClusterQueue: LowerPriority

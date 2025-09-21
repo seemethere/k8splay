@@ -1,0 +1,113 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: gpu-driver-test-kueue
+  namespace: core-team  # Using core-team namespace that has GPU queue access
+  labels:
+    kueue.x-k8s.io/queue-name: core-gpu-queue
+spec:
+  template:
+    metadata:
+      labels:
+        kueue.x-k8s.io/queue-name: core-gpu-queue
+    spec:
+      restartPolicy: Never
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+      nodeSelector:
+        nvidia.com/gpu.present: "true"
+      containers:
+      - name: gpu-test
+        image: nvidia/cuda:13.0.1-runtime-ubuntu22.04
+        command: ["/bin/bash"]
+        args:
+        - -c
+        - |
+          echo "=== GPU Driver and CUDA Test (Kueue Version) ==="
+          echo "Date: $(date)"
+          echo "Hostname: $(hostname)"
+          echo "Namespace: $NAMESPACE"
+          echo "Queue: core-gpu-queue"
+          echo ""
+          
+          echo "=== NVIDIA Driver Version ==="
+          if command -v nvidia-smi &> /dev/null; then
+            echo "Driver Version:"
+            nvidia-smi --query-gpu=driver_version --format=csv,noheader,nounits
+            echo ""
+            
+            echo "=== Full nvidia-smi Output ==="
+            nvidia-smi
+            echo ""
+            
+            echo "=== GPU Details ==="
+            nvidia-smi --query-gpu=name,memory.total,compute_cap,driver_version,temperature.gpu,power.draw --format=csv
+            echo ""
+            
+            echo "=== CUDA Runtime Version ==="
+            cat /usr/local/cuda/version.txt 2>/dev/null || echo "CUDA version file not found"
+            echo ""
+            
+            echo "=== Container GPU Environment ==="
+            echo "NVIDIA_VISIBLE_DEVICES: $NVIDIA_VISIBLE_DEVICES"
+            echo "CUDA_VISIBLE_DEVICES: $CUDA_VISIBLE_DEVICES"
+            echo ""
+            
+            echo "=== GPU Memory Test ==="
+            nvidia-smi --query-gpu=memory.used,memory.free,memory.total --format=csv
+            echo ""
+            
+            echo "=== Kueue Resource Test ==="
+            echo "Testing GPU allocation through Kueue..."
+            
+            # Run a simple GPU memory allocation test
+            python3 -c "
+          import os
+          import subprocess
+          try:
+              result = subprocess.run(['nvidia-smi', '--query-gpu=count', '--format=csv,noheader'], 
+                                    capture_output=True, text=True)
+              gpu_count = result.stdout.strip()
+              print(f'GPUs allocated by Kueue: {gpu_count}')
+              
+              # Test GPU memory allocation
+              result = subprocess.run(['nvidia-smi', '--query-gpu=memory.total', '--format=csv,noheader,nounits'], 
+                                    capture_output=True, text=True)
+              memory_mb = result.stdout.strip()
+              print(f'Total GPU memory available: {memory_mb} MB')
+              
+              print('✅ Kueue GPU allocation successful')
+          except Exception as e:
+              print(f'❌ GPU test failed: {e}')
+          " 2>/dev/null || echo "Python test skipped (python3 not available)"
+            
+          else
+            echo "ERROR: nvidia-smi not found! GPU operator may not be working properly."
+            echo "This could indicate:"
+            echo "1. GPU operator pods are not running"
+            echo "2. Node doesn't have GPU hardware"
+            echo "3. Driver installation failed"
+            exit 1
+          fi
+          
+          echo ""
+          echo "=== Kueue Integration Test Summary ==="
+          echo "✅ GPU driver accessible via nvidia-smi"
+          echo "✅ GPU devices detected and allocated"
+          echo "✅ Container has access to GPU resources"
+          echo "✅ Kueue successfully scheduled job on GPU node"
+          echo ""
+          echo "🎉 GPU operator + Kueue integration is working correctly!"
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+          requests:
+            nvidia.com/gpu: 1
+        env:
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace

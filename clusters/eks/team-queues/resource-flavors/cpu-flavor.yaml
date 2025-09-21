@@ -1,0 +1,8 @@
+apiVersion: kueue.x-k8s.io/v1beta1
+kind: ResourceFlavor
+metadata:
+  name: cpu-flavor
+spec:
+  nodeLabels:
+    # Standard CPU nodes - matches any available nodes
+    kubernetes.io/os: linux

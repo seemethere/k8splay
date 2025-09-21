@@ -1,0 +1,105 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: gpu-driver-test
+  namespace: default
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+      nodeSelector:
+        nvidia.com/gpu.present: "true"
+      containers:
+      - name: gpu-test
+        image: nvidia/cuda:13.0.1-runtime-ubuntu22.04
+        command: ["/bin/bash"]
+        args:
+        - -c
+        - |
+          echo "=== GPU Driver and CUDA Test ==="
+          echo "Date: $(date)"
+          echo "Hostname: $(hostname)"
+          echo ""
+          
+          echo "=== NVIDIA Driver Version ==="
+          if command -v nvidia-smi &> /dev/null; then
+            nvidia-smi --query-gpu=driver_version --format=csv,noheader,nounits
+            echo ""
+            
+            echo "=== Full nvidia-smi Output ==="
+            nvidia-smi
+            echo ""
+            
+            echo "=== GPU Details ==="
+            nvidia-smi --query-gpu=name,memory.total,compute_cap,driver_version --format=csv
+            echo ""
+            
+            echo "=== CUDA Version ==="
+            nvcc --version || echo "nvcc not found, but runtime should work"
+            echo ""
+            
+            echo "=== Simple GPU Test ==="
+            cat << 'EOF' > /tmp/test.cu
+          #include <stdio.h>
+          #include <cuda_runtime.h>
+          
+          __global__ void hello_gpu() {
+              printf("Hello from GPU thread %d!\n", threadIdx.x);
+          }
+          
+          int main() {
+              int deviceCount;
+              cudaError_t error = cudaGetDeviceCount(&deviceCount);
+              
+              if (error != cudaSuccess) {
+                  printf("CUDA Error: %s\n", cudaGetErrorString(error));
+                  return 1;
+              }
+              
+              printf("Found %d CUDA device(s)\n", deviceCount);
+              
+              for (int i = 0; i < deviceCount; i++) {
+                  cudaDeviceProp prop;
+                  cudaGetDeviceProperties(&prop, i);
+                  printf("Device %d: %s (Compute %d.%d)\n", i, prop.name, prop.major, prop.minor);
+              }
+              
+              // Launch a simple kernel
+              hello_gpu<<<1, 5>>>();
+              cudaDeviceSynchronize();
+              
+              printf("GPU test completed successfully!\n");
+              return 0;
+          }
+          EOF
+            
+            # Try to compile and run if nvcc is available
+            if command -v nvcc &> /dev/null; then
+              echo "Compiling and running CUDA test..."
+              nvcc -o /tmp/test /tmp/test.cu && /tmp/test
+            else
+              echo "nvcc not available, but driver test completed"
+            fi
+            
+          else
+            echo "ERROR: nvidia-smi not found! GPU operator may not be working properly."
+            exit 1
+          fi
+          
+          echo ""
+          echo "=== Test Summary ==="
+          echo "✅ GPU driver test completed"
+          echo "✅ nvidia-smi accessible"
+          echo "✅ GPU devices detected"
+          echo ""
+          echo "GPU operator appears to be working correctly!"
+        resources:
+          limits:
+            nvidia.com/gpu: "1"
+          requests:
+            nvidia.com/gpu: "1"
